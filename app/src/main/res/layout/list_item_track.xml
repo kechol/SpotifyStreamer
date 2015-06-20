@@ -3,7 +3,8 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="80dp"
-    android:padding="8dp">
+    android:padding="8dp"
+    android:id="@+id/list_item_track">
 
     <ImageView
         android:layout_width="64dp"

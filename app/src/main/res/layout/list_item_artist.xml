@@ -2,12 +2,13 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal"
     android:layout_width="match_parent"
-    android:layout_height="80dp">
+    android:layout_height="80dp"
+    android:id="@+id/list_item_artist">
 
     <ImageView
         android:layout_width="64dp"
         android:layout_height="64dp"
-        android:id="@+id/imageView"
+        android:id="@+id/list_item_artist_image"
         android:layout_margin="8dp" />
 
     <TextView
@@ -15,6 +16,6 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="Artist Name"
-        android:id="@+id/textView"
+        android:id="@+id/list_item_artist_name"
         android:layout_gravity="center_vertical" />
 </LinearLayout>
