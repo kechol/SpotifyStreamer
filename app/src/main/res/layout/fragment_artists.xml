@@ -13,7 +13,9 @@
         android:layout_height="wrap_content"
         android:id="@+id/search_text"
         android:lines="1"
-        android:maxLines="1" />
+        android:maxLines="1"
+        android:singleLine="true"
+        android:imeOptions="actionSearch" />
 
     <ListView
         android:layout_width="match_parent"

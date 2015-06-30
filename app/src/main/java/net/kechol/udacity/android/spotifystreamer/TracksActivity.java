@@ -1,17 +1,29 @@
 package net.kechol.udacity.android.spotifystreamer;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
 
-public class TracksActivity extends ActionBarActivity {
+public class TracksActivity extends ActionBarActivity implements TracksActivityFragment.Callback {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tracks);
+
+        Bundle arguments = new Bundle();
+        arguments.putParcelable(TracksActivityFragment.TRACK_URI, getIntent().getData());
+
+        TracksActivityFragment fragment = new TracksActivityFragment();
+        fragment.setArguments(arguments);
+
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.activity_tracks, fragment)
+                .commit();
     }
 
 
@@ -35,5 +47,11 @@ public class TracksActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onItemSelected(Uri contentUri) {
+        Intent intent = new Intent(this, PlayerActivity.class).setData(contentUri);
+        startActivity(intent);
     }
 }

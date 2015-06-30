@@ -1,19 +1,20 @@
 package net.kechol.udacity.android.spotifystreamer;
 
-import android.support.v7.app.ActionBarActivity;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
 
-public class ArtistsActivity extends ActionBarActivity {
+public class ArtistsActivity extends ActionBarActivity implements ArtistsActivityFragment.Callback {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_artists);
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -35,5 +36,11 @@ public class ArtistsActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onItemSelected(Uri contentUri) {
+        Intent intent = new Intent(this, TracksActivity.class).setData(contentUri);
+        startActivity(intent);
     }
 }

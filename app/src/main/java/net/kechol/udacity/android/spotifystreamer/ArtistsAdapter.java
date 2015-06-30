@@ -1,32 +1,40 @@
 package net.kechol.udacity.android.spotifystreamer;
 
 import android.content.Context;
-import android.database.Cursor;
-import android.support.v4.widget.CursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
-public class ArtistsAdapter extends CursorAdapter {
+import kaaes.spotify.webapi.android.models.Artist;
 
-    public ArtistsAdapter(Context context, Cursor cursor, int flags) { super(context, cursor, flags); }
+public class ArtistsAdapter extends ArrayAdapter<Artist> {
 
-    @Override
-    public View newView(Context context, Cursor cursor, ViewGroup parent) {
-        View view = LayoutInflater.from(context).inflate(R.layout.list_item_artist, parent, false);
-        return view;
+    public ArtistsAdapter(Context context, int resource) {
+        super(context, resource);
     }
 
     @Override
-    public void bindView(View view, Context context, Cursor cursor) {
-        ImageView imageView = (ImageView) view.findViewById(R.id.list_item_artist_image);
-        Picasso.with(context).load("http://placehold.it/80x80").into(imageView);
+    public View getView(int position, View convertView, ViewGroup parent) {
+        Artist artist = getItem(position);
+        if (artist == null) return convertView;
 
-        TextView nameView = (TextView) view.findViewById(R.id.list_item_artist_name);
-        nameView.setText("Famous Artist Name Here");
+        if (convertView == null) {
+            convertView = LayoutInflater.from(getContext()).inflate(R.layout.list_item_artist, parent, false);
+        }
+
+        TextView nameView = (TextView) convertView.findViewById(R.id.list_item_artist_name);
+        ImageView imageView = (ImageView) convertView.findViewById(R.id.list_item_artist_image);
+
+        nameView.setText(artist.name);
+        if (artist.images.size() > 0) {
+            Picasso.with(getContext()).load(artist.images.get(0).url).into(imageView);
+        }
+
+        return convertView;
     }
 }

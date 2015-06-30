@@ -9,7 +9,7 @@
     <ImageView
         android:layout_width="64dp"
         android:layout_height="64dp"
-        android:id="@+id/imageView"
+        android:id="@+id/list_item_track_image"
         android:layout_marginRight="8dp" />
 
     <LinearLayout
@@ -22,8 +22,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Artist Name"
-            android:id="@+id/textView"
+            android:text="Track Name"
+            android:id="@+id/list_item_track_name"
             android:layout_gravity="center_vertical" />
 
         <TextView
@@ -31,7 +31,7 @@
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:text="Album Name"
-            android:id="@+id/textView2"
+            android:id="@+id/list_item_track_album"
             android:layout_gravity="center_vertical" />
     </LinearLayout>
 
