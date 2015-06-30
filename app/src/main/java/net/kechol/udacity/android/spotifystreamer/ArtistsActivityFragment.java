@@ -17,6 +17,7 @@ import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
@@ -98,6 +99,12 @@ public class ArtistsActivityFragment extends Fragment implements LoaderManager.L
     @Override
     public void onLoadFinished(Loader<ArtistsPager> loader, ArtistsPager data) {
         Log.d("ArtistsActivityFragment", "onLoadFinished: " + data.artists.items.toString());
+
+        if (data.artists == null || data.artists.items.size() == 0) {
+            Toast.makeText(getActivity(), "No Results. Search Again!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         for(Artist artist: data.artists.items) {
             mArtistsAdapter.add(artist);
         }
