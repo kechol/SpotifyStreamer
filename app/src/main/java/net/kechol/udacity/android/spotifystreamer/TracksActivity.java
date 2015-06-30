@@ -15,15 +15,17 @@ public class TracksActivity extends ActionBarActivity implements TracksActivityF
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tracks);
 
-        Bundle arguments = new Bundle();
-        arguments.putParcelable(TracksActivityFragment.TRACK_URI, getIntent().getData());
+        if (savedInstanceState == null) {
+            Bundle arguments = new Bundle();
+            arguments.putParcelable(TracksActivityFragment.TRACK_URI, getIntent().getData());
 
-        TracksActivityFragment fragment = new TracksActivityFragment();
-        fragment.setArguments(arguments);
+            TracksActivityFragment fragment = new TracksActivityFragment();
+            fragment.setArguments(arguments);
 
-        getSupportFragmentManager().beginTransaction()
-                .add(R.id.activity_tracks, fragment)
-                .commit();
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.activity_tracks, fragment)
+                    .commit();
+        }
     }
 
 
