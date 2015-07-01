@@ -7,16 +7,13 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
-import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -56,7 +53,7 @@ public class ArtistsActivityFragment extends Fragment implements LoaderManager.L
                              Bundle savedInstanceState) {
 
         View rootView = inflater.inflate(R.layout.fragment_artists, container, false);
-        
+
         mArtistsAdapter = new ArtistsAdapter(getActivity(), R.layout.list_item_artist);
 
         if (savedInstanceState != null) {
@@ -81,19 +78,24 @@ public class ArtistsActivityFragment extends Fragment implements LoaderManager.L
             }
         });
 
-        final EditText searchText = (EditText) rootView.findViewById(R.id.search_text);
-        searchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+        final SearchView searchView = (SearchView) rootView.findViewById(R.id.search_artist);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                Log.d("OnEditorActionListener", "onEditorAction: " + String.valueOf(actionId));
-                if (actionId == EditorInfo.IME_ACTION_SEARCH && v.getText().length() > 0) {
+            public boolean onQueryTextSubmit(String s) {
+                if (s.length() > 0) {
                     Bundle args = new Bundle();
-                    args.putString("query", v.getText().toString());
+                    args.putString("query", s);
                     // need to call forceReload() for backward compatibility
                     // see: http://stackoverflow.com/questions/10524667/android-asynctaskloader-doesnt-start-loadinbackground
-                    getLoaderManager().initLoader(SEARCH_ARTISTS_TASK_LOADER_ID, args, ArtistsActivityFragment.this).forceLoad();
+                    getLoaderManager().restartLoader(SEARCH_ARTISTS_TASK_LOADER_ID, args, ArtistsActivityFragment.this).forceLoad();
                     return true;
                 }
+
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String s) {
                 return false;
             }
         });
