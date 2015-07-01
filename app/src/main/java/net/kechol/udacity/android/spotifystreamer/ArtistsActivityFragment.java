@@ -19,9 +19,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
-import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
 import retrofit.RetrofitError;
 
@@ -29,9 +31,11 @@ import retrofit.RetrofitError;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class ArtistsActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<ArtistsPager> {
+public class ArtistsActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<List<Artist>> {
 
     private static final int SEARCH_ARTISTS_TASK_LOADER_ID = 0;
+    private static final String STATE_ARTISTS_LIST = "mArtistsList";
+    private List<Artist> mArtistsList;
     private ArtistsAdapter mArtistsAdapter;
 
     public ArtistsActivityFragment() {
@@ -42,10 +46,40 @@ public class ArtistsActivityFragment extends Fragment implements LoaderManager.L
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putParcelableArrayList(STATE_ARTISTS_LIST, (ArrayList) mArtistsList);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
         View rootView = inflater.inflate(R.layout.fragment_artists, container, false);
+        
+        mArtistsAdapter = new ArtistsAdapter(getActivity(), R.layout.list_item_artist);
+
+        if (savedInstanceState != null) {
+            mArtistsList = savedInstanceState.getParcelableArrayList(STATE_ARTISTS_LIST);
+            mArtistsAdapter.addAll(mArtistsList);
+        }
+
+        ListView listView = (ListView) rootView.findViewById(R.id.list_artists);
+        listView.setAdapter(mArtistsAdapter);
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Artist artist = (Artist) parent.getItemAtPosition(position);
+                if (artist != null) {
+                    ((Callback) getActivity()).onItemSelected(
+                            SpotifyContract.TrackEntry.CONTENT_URI.buildUpon()
+                                    .appendQueryParameter(SpotifyContract.TrackEntry.COLUMN_ARTIST_ID, artist.id).build()
+                    );
+                }
+            }
+        });
 
         final EditText searchText = (EditText) rootView.findViewById(R.id.search_text);
         searchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -64,30 +98,11 @@ public class ArtistsActivityFragment extends Fragment implements LoaderManager.L
             }
         });
 
-        ListView listView = (ListView) rootView.findViewById(R.id.list_artists);
-
-        mArtistsAdapter = new ArtistsAdapter(getActivity(), R.layout.list_item_artist);
-        listView.setAdapter(mArtistsAdapter);
-
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Artist artist = (Artist) parent.getItemAtPosition(position);
-                if (artist != null) {
-                    ((Callback) getActivity()).onItemSelected(
-                            SpotifyContract.TrackEntry.CONTENT_URI.buildUpon()
-                                    .appendQueryParameter(SpotifyContract.TrackEntry.COLUMN_ARTIST_ID, artist.id).build()
-                    );
-                }
-            }
-        });
-
         return rootView;
     }
 
     @Override
-    public Loader<ArtistsPager> onCreateLoader(int id, Bundle args) {
+    public Loader<List<Artist>> onCreateLoader(int id, Bundle args) {
         if (args != null) {
             mArtistsAdapter.clear();
             String query = args.getString("query");
@@ -98,30 +113,24 @@ public class ArtistsActivityFragment extends Fragment implements LoaderManager.L
     }
 
     @Override
-    public void onLoadFinished(Loader<ArtistsPager> loader, ArtistsPager data) {
-        if (data == null) {
-            Toast.makeText(getActivity(), "Some Error Occurred. Check connection?", Toast.LENGTH_SHORT).show();
-            return;
-        }
+    public void onLoadFinished(Loader<List<Artist>> loader, List<Artist> data) {
+        Log.d("ArtistsActivityFragment", "onLoadFinished: " + data.toString());
 
-        Log.d("ArtistsActivityFragment", "onLoadFinished: " + data.artists.items.toString());
-
-        if (data.artists == null || data.artists.items.size() == 0) {
+        if (data == null || data.size() == 0) {
             Toast.makeText(getActivity(), "No Results. Search Again!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        for(Artist artist: data.artists.items) {
-            mArtistsAdapter.add(artist);
-        }
+        mArtistsList = data;
+        mArtistsAdapter.addAll(mArtistsList);
     }
 
     @Override
-    public void onLoaderReset(Loader<ArtistsPager> loader) {
+    public void onLoaderReset(Loader<List<Artist>> loader) {
         mArtistsAdapter.clear();
     }
 
-    static private class SearchArtistsTaskLoader extends AsyncTaskLoader<ArtistsPager> {
+    static private class SearchArtistsTaskLoader extends AsyncTaskLoader<List<Artist>> {
 
         private SpotifyService mService;
         private String mQuery;
@@ -133,15 +142,25 @@ public class ArtistsActivityFragment extends Fragment implements LoaderManager.L
         }
 
         @Override
-        public ArtistsPager loadInBackground() {
+        public List<Artist> loadInBackground() {
+            List<Artist> result = new ArrayList<>();
+
             try {
                 ArtistsPager pager = mService.searchArtists(mQuery);
                 Log.d("SearchArtistsTaskLoader", "loadInBackground: " + mQuery);
-                return pager;
+
+                if (pager == null || pager.artists == null) {
+                    return result;
+                }
+
+                for(kaaes.spotify.webapi.android.models.Artist artist: pager.artists.items) {
+                    result.add(new Artist(artist));
+                }
             } catch (RetrofitError error) {
                 Log.e("SearchArtistsTaskLoader", "RetrofitError: " + error.getMessage());
             }
-            return null;
+
+            return result;
         }
     }
 }
