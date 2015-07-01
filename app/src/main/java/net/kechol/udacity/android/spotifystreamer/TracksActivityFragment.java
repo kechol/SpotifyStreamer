@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,6 +23,7 @@ import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.Tracks;
+import retrofit.RetrofitError;
 
 
 /**
@@ -96,6 +98,11 @@ public class TracksActivityFragment extends Fragment implements LoaderManager.Lo
 
     @Override
     public void onLoadFinished(Loader<Tracks> loader, Tracks data) {
+        if (data == null || data.tracks == null) {
+            Toast.makeText(getActivity(), "Some Error Occurred. Check connection?", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         for(Track track: data.tracks) {
             mTracksAdapter.add(track);
         }
@@ -114,11 +121,15 @@ public class TracksActivityFragment extends Fragment implements LoaderManager.Lo
 
         @Override
         public Tracks loadInBackground() {
-            Map<String, Object> options = new HashMap<String, Object>();
-            options.put(SpotifyContract.TrackEntry.COLUMN_COUNTRY, SpotifyContract.TrackEntry.VALUE_COUNTRY_DEFAULT);
-            Tracks tracks = mService.getArtistTopTrack(mArtistId, options);
-            // TODO: Error Handling for Retrofit
-            return tracks;
+            try {
+                Map<String, Object> options = new HashMap<String, Object>();
+                options.put(SpotifyContract.TrackEntry.COLUMN_COUNTRY, SpotifyContract.TrackEntry.VALUE_COUNTRY_DEFAULT);
+                Tracks tracks = mService.getArtistTopTrack(mArtistId, options);
+                return tracks;
+            } catch (RetrofitError error) {
+                Log.e("SearchTopTracksTaskLoader", "RetrofitError: " + error.getMessage());
+            }
+            return null;
         }
     }
 }

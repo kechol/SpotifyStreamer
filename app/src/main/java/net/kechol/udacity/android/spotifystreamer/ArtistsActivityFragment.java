@@ -23,6 +23,7 @@ import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
+import retrofit.RetrofitError;
 
 
 /**
@@ -98,6 +99,11 @@ public class ArtistsActivityFragment extends Fragment implements LoaderManager.L
 
     @Override
     public void onLoadFinished(Loader<ArtistsPager> loader, ArtistsPager data) {
+        if (data == null) {
+            Toast.makeText(getActivity(), "Some Error Occurred. Check connection?", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         Log.d("ArtistsActivityFragment", "onLoadFinished: " + data.artists.items.toString());
 
         if (data.artists == null || data.artists.items.size() == 0) {
@@ -128,10 +134,14 @@ public class ArtistsActivityFragment extends Fragment implements LoaderManager.L
 
         @Override
         public ArtistsPager loadInBackground() {
-            ArtistsPager pager = mService.searchArtists(mQuery);
-            Log.d("SearchArtistsTaskLoader", "loadInBackground: " + mQuery);
-            // TODO: Error Handling for Retrofit
-            return pager;
+            try {
+                ArtistsPager pager = mService.searchArtists(mQuery);
+                Log.d("SearchArtistsTaskLoader", "loadInBackground: " + mQuery);
+                return pager;
+            } catch (RetrofitError error) {
+                Log.e("SearchArtistsTaskLoader", "RetrofitError: " + error.getMessage());
+            }
+            return null;
         }
     }
 }
