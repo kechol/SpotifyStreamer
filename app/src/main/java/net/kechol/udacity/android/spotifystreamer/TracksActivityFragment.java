@@ -12,16 +12,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
-import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.Tracks;
 import retrofit.RetrofitError;
 
@@ -29,19 +29,31 @@ import retrofit.RetrofitError;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class TracksActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Tracks> {
+public class TracksActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<List<Track>> {
 
     private static final int SEARCH_TOP_TRACKS_TASK_LOADER_ID = 0;
     public static final String TRACK_URI = "TRACK_URI";
 
+    private static final String STATE_TRACKS_LIST = "mTracksList";
+    private static final String STATE_ARTIST_ID = "mArtistId";
+
     private Uri mUri;
-    private ArrayAdapter<Track> mTracksAdapter;
+    private String mArtistId;
+    private List<Track> mTracksList;
+    private TracksAdapter mTracksAdapter;
 
     public TracksActivityFragment() {
     }
 
     public interface Callback {
         public void onItemSelected(Uri contentUri);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putParcelableArrayList(STATE_TRACKS_LIST, (ArrayList) mTracksList);
+        outState.putString(STATE_ARTIST_ID, mArtistId);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -54,8 +66,9 @@ public class TracksActivityFragment extends Fragment implements LoaderManager.Lo
 
         View rootView = inflater.inflate(R.layout.fragment_tracks, container, false);
 
-        ListView listView = (ListView) rootView.findViewById(R.id.list_tracks);
         mTracksAdapter = new TracksAdapter(getActivity(), R.layout.list_item_track);
+
+        ListView listView = (ListView) rootView.findViewById(R.id.list_tracks);
         listView.setAdapter(mTracksAdapter);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -72,16 +85,22 @@ public class TracksActivityFragment extends Fragment implements LoaderManager.Lo
             }
         });
 
-        String artistId = mUri.getQueryParameter(SpotifyContract.TrackEntry.COLUMN_ARTIST_ID);
-        Bundle loaderArgs = new Bundle();
-        loaderArgs.putString(SpotifyContract.TrackEntry.COLUMN_ARTIST_ID, artistId);
-        getLoaderManager().initLoader(SEARCH_TOP_TRACKS_TASK_LOADER_ID, loaderArgs, TracksActivityFragment.this).forceLoad();
+        if (savedInstanceState != null) {
+            mTracksList = savedInstanceState.getParcelableArrayList(STATE_TRACKS_LIST);
+            mArtistId = savedInstanceState.getString(STATE_ARTIST_ID);
+            mTracksAdapter.addAll(mTracksList);
+        } else {
+            mArtistId = mUri.getQueryParameter(SpotifyContract.TrackEntry.COLUMN_ARTIST_ID);
+            Bundle loaderArgs = new Bundle();
+            loaderArgs.putString(SpotifyContract.TrackEntry.COLUMN_ARTIST_ID, mArtistId);
+            getLoaderManager().initLoader(SEARCH_TOP_TRACKS_TASK_LOADER_ID, loaderArgs, TracksActivityFragment.this).forceLoad();
+        }
 
         return rootView;
     }
 
     @Override
-    public Loader<Tracks> onCreateLoader(int id, Bundle args) {
+    public Loader<List<Track>> onCreateLoader(int id, Bundle args) {
         if (args != null) {
             mTracksAdapter.clear();
             String artistId = args.getString(SpotifyContract.TrackEntry.COLUMN_ARTIST_ID);
@@ -92,23 +111,22 @@ public class TracksActivityFragment extends Fragment implements LoaderManager.Lo
     }
 
     @Override
-    public void onLoaderReset(Loader<Tracks> loader) {
+    public void onLoaderReset(Loader<List<Track>> loader) {
         mTracksAdapter.clear();
     }
 
     @Override
-    public void onLoadFinished(Loader<Tracks> loader, Tracks data) {
-        if (data == null || data.tracks == null) {
-            Toast.makeText(getActivity(), "Some Error Occurred. Check connection?", Toast.LENGTH_SHORT).show();
+    public void onLoadFinished(Loader<List<Track>> loader, List<Track> data) {
+        if (data == null || data.size() == 0) {
+            Toast.makeText(getActivity(), "No Results.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        for(Track track: data.tracks) {
-            mTracksAdapter.add(track);
-        }
+        mTracksList = data;
+        mTracksAdapter.addAll(mTracksList);
     }
 
-    static private class SearchTopTracksTaskLoader extends AsyncTaskLoader<Tracks> {
+    static private class SearchTopTracksTaskLoader extends AsyncTaskLoader<List<Track>> {
 
         private SpotifyService mService;
         private String mArtistId;
@@ -120,16 +138,20 @@ public class TracksActivityFragment extends Fragment implements LoaderManager.Lo
         }
 
         @Override
-        public Tracks loadInBackground() {
+        public List<Track> loadInBackground() {
+            List<Track> result = new ArrayList<Track>();
             try {
                 Map<String, Object> options = new HashMap<String, Object>();
                 options.put(SpotifyContract.TrackEntry.COLUMN_COUNTRY, SpotifyContract.TrackEntry.VALUE_COUNTRY_DEFAULT);
                 Tracks tracks = mService.getArtistTopTrack(mArtistId, options);
-                return tracks;
+                for (kaaes.spotify.webapi.android.models.Track track: tracks.tracks) {
+                    result.add(new Track(track));
+                }
+                return result;
             } catch (RetrofitError error) {
                 Log.e("SearchTopTracksTaskLoader", "RetrofitError: " + error.getMessage());
             }
-            return null;
+            return result;
         }
     }
 }

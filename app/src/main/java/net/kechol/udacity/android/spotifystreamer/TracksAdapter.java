@@ -10,7 +10,7 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
-import kaaes.spotify.webapi.android.models.Track;
+import java.util.List;
 
 public class TracksAdapter extends ArrayAdapter<Track> {
 
@@ -32,15 +32,18 @@ public class TracksAdapter extends ArrayAdapter<Track> {
         ImageView imageView = (ImageView) convertView.findViewById(R.id.list_item_track_image);
 
         nameView.setText(track.name);
+        albumView.setText(track.album_name);
 
-        if (track.album != null) {
-            albumView.setText(track.album.name);
-        }
-
-        if (track.album != null && track.album.images.size() > 0) {
-            Picasso.with(getContext()).load(track.album.images.get(0).url).into(imageView);
+        if (track.image_url != null) {
+            Picasso.with(getContext()).load(track.image_url).into(imageView);
         }
 
         return convertView;
+    }
+
+    public void addAll(List<Track> tracksList) {
+        for (Track track: tracksList) {
+            add(track);
+        }
     }
 }
